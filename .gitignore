@@ -11,6 +11,11 @@ uv.lock
 # Virtual environments
 .venv
 
+# Delibird files
 *.json
 **/*.json
 **/__metadata__
+tmp/
+
+# Mac files
+.DS_Store
