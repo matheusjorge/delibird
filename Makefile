@@ -1,4 +1,4 @@
-test:
+pytest:
 	uv run pytest tests
 
 docker-up:

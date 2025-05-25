@@ -6,6 +6,11 @@ build/
 dist/
 wheels/
 *.egg-info
+uv.lock
 
 # Virtual environments
 .venv
+
+*.json
+**/*.json
+**/__metadata__
