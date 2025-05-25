@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/delibird_icon.png" alt="Delibird Logo" width="200"/>
+  <img src="assets/delibird_icon2.png" alt="Delibird Logo" width="200"/>
 </div>
 
 # Delibird
