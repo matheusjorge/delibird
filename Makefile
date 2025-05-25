@@ -9,3 +9,6 @@ docker-down:
 
 s3-exporter:
 	uv run scripts/s3_exporter.py
+
+demo:
+	uv run scripts/demo.py
