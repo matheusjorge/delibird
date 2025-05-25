@@ -1,0 +1,12 @@
+services:
+  minio:
+    image: quay.io/minio/minio
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - ~/minio/data:/data
+    environment:
+      - MINIO_ROOT_USER=delibird
+      - MINIO_ROOT_PASSWORD=delibird
+    command: server /data --console-address ":9001"
