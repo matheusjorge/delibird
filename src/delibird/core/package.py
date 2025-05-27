@@ -29,6 +29,7 @@ class FileMetadata(BaseModel):
     filename: str
     file_content_encoder_class: Type[ContentEncoderProtocol]
     file_content_class: Type[Any]
+    file_dump_kwargs: Mapping[str, Any] = {}
 
     @field_serializer("file_content_encoder_class")
     def serialize_file_content_encoder_class(
@@ -127,8 +128,8 @@ class File(BaseModel):
         cls,
         folder_path: Path,
         filename: str,
-        content_encoder_class: Type[ContentEncoderProtocol],
         content_class: Type[Any],
+        content_encoder_class: Type[ContentEncoderProtocol] = PydanticEncoder,
         **kwargs,
     ) -> "File":
         content = content_encoder_class.disk_load(
@@ -136,7 +137,9 @@ class File(BaseModel):
             content_class,
             **kwargs,
         )
-        return cls(filename=filename, content=content)
+        return cls(
+            filename=filename, content=content, content_encoder=content_encoder_class
+        )
 
 
 class Folder(BaseModel):
@@ -145,7 +148,7 @@ class Folder(BaseModel):
     folders: Annotated[Sequence["Folder"], Field(default_factory=list)]
     folder_metadata: Annotated[FolderMetadata, Field(default_factory=FolderMetadata)]
 
-    def add_file(self, file: File):
+    def add_file(self, file: File, dump_kwargs: Mapping[str, Any] = {}):
         if file.filename in [f.filename for f in self.files]:
             raise ValueError(f"File {file.filename} already exists")
         self.files.append(file)
@@ -154,6 +157,7 @@ class Folder(BaseModel):
                 filename=file.filename,
                 file_content_class=type(file.content),
                 file_content_encoder_class=file.content_encoder,
+                file_dump_kwargs=dump_kwargs,
             )
         )
 
@@ -171,8 +175,8 @@ class Folder(BaseModel):
     def dump(self, path: Path, **kwargs) -> None:
         full_path = path / self.name
         full_path.mkdir(parents=True, exist_ok=True)
-        for file in self.files:
-            file.dump(full_path, **kwargs)
+        for file, metadata in zip(self.files, self.folder_metadata.files_metadata):
+            file.dump(full_path, **metadata.file_dump_kwargs, **kwargs)
         for folder in self.folders:
             folder.dump(full_path, **kwargs)
         self.folder_metadata.dump(full_path)
