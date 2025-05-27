@@ -4,7 +4,7 @@
 
 # Delibird
 
-Delibird is a Python package for managing and exporting Python objects to persistent storage, with a flexible structure. It provides a simple way to organize files and folders, and supports exporting to various storage backends like S3.
+Delibird (Data Exchange LIB) is a Python package for managing and exporting Python objects to persistent storage, with a flexible structure. It provides a simple way to organize files and folders, and supports exporting to various storage backends like S3.
 
 ## Features
 
