@@ -14,3 +14,6 @@ class ContentEncoderProtocol(Protocol):
 
     @staticmethod
     def validate_content(content: Any, **kwargs) -> bool: ...
+
+    @staticmethod
+    def base_dump_class(content: Any, **kwargs) -> Type[Any]: ...

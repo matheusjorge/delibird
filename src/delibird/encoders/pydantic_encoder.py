@@ -18,3 +18,7 @@ class PydanticEncoder:
     @staticmethod
     def validate_content(content: Any, **kwargs) -> bool:
         return isinstance(content, BaseModel)
+
+    @staticmethod
+    def base_dump_class(content: BaseModel, **kwargs) -> Type[BaseModel]:
+        return type(content)

@@ -35,3 +35,7 @@ class PaginatedPydanticEncoder:
         return isinstance(content, Sequence) and all(
             isinstance(item, BaseModel) for item in content
         )
+
+    @staticmethod
+    def base_dump_class(content: Sequence[BaseModel], **kwargs) -> Type[BaseModel]:
+        return type(content[0])

@@ -155,7 +155,7 @@ class Folder(BaseModel):
         self.folder_metadata.append(
             FileMetadata(
                 filename=file.filename,
-                file_content_class=type(file.content),
+                file_content_class=file.content_encoder.base_dump_class(file.content),
                 file_content_encoder_class=file.content_encoder,
                 file_dump_kwargs=dump_kwargs,
             )
