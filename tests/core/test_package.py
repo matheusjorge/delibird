@@ -116,3 +116,9 @@ def test_load(test_content):
 
     # clean up
     shutil.rmtree(Path(".") / "test")
+
+
+def test_chaining():
+    package = Package(name="test")
+    package.add_folder(Folder(name="test")).add_folder(Folder(name="test2"))
+    assert len(package.folders) == 2

@@ -160,17 +160,22 @@ class Folder(BaseModel):
                 file_dump_kwargs=dump_kwargs,
             )
         )
+        return self
 
     def remove_file(self, file: File):
         idx = self.files.index(file)
         self.files.remove(file)
         self.folder_metadata.files_metadata.pop(idx)
 
+        return self
+
     def add_folder(self, folder: "Folder"):
         if folder.name in [f.name for f in self.folders]:
             raise ValueError(f"Folder {folder.name} already exists")
         self.folders.append(folder)
         self.folder_metadata.folders.append(str(folder.name))
+
+        return self
 
     def dump(self, path: Path, **kwargs) -> None:
         full_path = path / self.name
@@ -221,6 +226,8 @@ class Package(BaseModel):
         if folder.name in [f.name for f in self.folders]:
             raise ValueError(f"Folder {folder.name} already exists")
         self.folders.append(folder)
+
+        return self
 
     def dump(self, **kwargs) -> None:
         for folder in self.folders:

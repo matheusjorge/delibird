@@ -147,3 +147,16 @@ def test_load_nested_folder(test_content):
 
     # clean up
     shutil.rmtree(directory / folder_name)
+
+
+def test_chaining(test_content):
+    folder = Folder(name="test")
+    (
+        folder.add_file(File(filename="test.json", content=test_content))
+        .add_folder(Folder(name="test2"))
+        .folders[0]
+        .add_file(File(filename="test2.json", content=test_content))
+    )
+    assert len(folder.files) == 1
+    assert len(folder.folders) == 1
+    assert len(folder.folders[0].files) == 1
