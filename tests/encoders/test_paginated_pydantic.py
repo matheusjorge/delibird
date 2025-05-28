@@ -119,4 +119,34 @@ def test_paginated_with_folder():
     assert (directory / "paginated" / "test_3.json").exists()
     assert not (directory / "paginated" / "test_4.json").exists()
 
+    loaded_folder = Folder.load(directory / "paginated")
+    assert loaded_folder == folder
+
     shutil.rmtree(directory / "paginated")
+
+
+def test_paginated_with_package():
+    content = [SimpleModel(name=f"test_{i}", age=i) for i in range(10)]
+    directory = Path(".")
+    directory.mkdir(parents=True, exist_ok=True)
+    file = File(
+        filename="test.json", content=content, content_encoder=PaginatedPydanticEncoder
+    )
+    folder = Folder(name="paginated")
+    folder.add_file(file, dump_kwargs={"page_size": 3})
+
+    package = Package(name="test_paginated")
+    package.add_folder(folder)
+
+    package.dump()
+
+    assert (directory / "test_paginated" / "paginated" / "test_0.json").exists()
+    assert (directory / "test_paginated" / "paginated" / "test_1.json").exists()
+    assert (directory / "test_paginated" / "paginated" / "test_2.json").exists()
+    assert (directory / "test_paginated" / "paginated" / "test_3.json").exists()
+    assert not (directory / "paginated" / "test_4.json").exists()
+
+    loaded_package = Package.load(directory / "test_paginated")
+    assert loaded_package == package
+
+    shutil.rmtree(directory / "test_paginated")
