@@ -1,6 +1,8 @@
 import shutil
 from pathlib import Path
 
+import pytest
+
 from delibird import File, Folder, Package
 
 
@@ -122,3 +124,19 @@ def test_chaining():
     package = Package(name="test")
     package.add_folder(Folder(name="test")).add_folder(Folder(name="test2"))
     assert len(package.folders) == 2
+
+
+def test_getitem(test_content):
+    package = Package(name="test")
+    folder = Folder(name="test").add_file(
+        File(filename="test.json", content=test_content)
+    )
+    package.add_folder(folder)
+    assert package["test"] == folder
+    assert package["test"]["test.json"] == test_content
+
+
+def test_getitem_not_found():
+    package = Package(name="test")
+    with pytest.raises(KeyError):
+        _ = package["test"]

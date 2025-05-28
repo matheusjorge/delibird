@@ -160,3 +160,22 @@ def test_chaining(test_content):
     assert len(folder.files) == 1
     assert len(folder.folders) == 1
     assert len(folder.folders[0].files) == 1
+
+
+def test_getitem(test_content):
+    folder = Folder(name="test")
+    folder.add_file(File(filename="test.json", content=test_content))
+    assert folder["test.json"] == test_content
+
+
+def test_getitem_not_found():
+    folder = Folder(name="test")
+    with pytest.raises(KeyError):
+        _ = folder["test.json"]
+
+
+def test_getitem_nested(test_content):
+    folder = Folder(name="test")
+    folder.add_folder(Folder(name="test2"))
+    folder["test2"].add_file(File(filename="test2.json", content=test_content))
+    assert folder["test2"]["test2.json"] == test_content

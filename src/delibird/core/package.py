@@ -174,19 +174,25 @@ class Folder(BaseModel):
     files: Annotated[Sequence[File], Field(default_factory=list)]
     folders: Annotated[Sequence["Folder"], Field(default_factory=list)]
     folder_metadata: Annotated[FolderMetadata, Field(default_factory=FolderMetadata)]
+    _index: Mapping[str, Any]
+
+    def model_post_init(self, context: Any):
+        self._index = {str(file.filename): file.content for file in self.files}
+        self._index.update({str(folder.name): folder for folder in self.folders})
 
     def add_file(self, file: File):
         if file.filename in [f.filename for f in self.files]:
             raise ValueError(f"File {file.filename} already exists")
         self.files.append(file)
         self.folder_metadata.append(file.metadata)
+        self._index[str(file.filename)] = file.content
         return self
 
     def remove_file(self, file: File):
         idx = self.files.index(file)
         self.files.remove(file)
         self.folder_metadata.files_metadata.pop(idx)
-
+        self._index.pop(str(file.filename))
         return self
 
     def add_folder(self, folder: "Folder"):
@@ -194,7 +200,7 @@ class Folder(BaseModel):
             raise ValueError(f"Folder {folder.name} already exists")
         self.folders.append(folder)
         self.folder_metadata.folders.append(str(folder.name))
-
+        self._index[str(folder.name)] = folder
         return self
 
     def dump(self, path: Path, **kwargs) -> None:
@@ -234,6 +240,9 @@ class Folder(BaseModel):
             name=_path, files=files, folders=folders, folder_metadata=folder_metadata
         )
 
+    def __getitem__(self, key: str) -> Any:
+        return self._index[key]
+
 
 class Package(BaseModel):
     name: str
@@ -242,11 +251,16 @@ class Package(BaseModel):
         Sequence[Folder],
         Field(default_factory=list, description="The folders in the package"),
     ]
+    _index: Mapping[str, Any]
+
+    def model_post_init(self, context: Any):
+        self._index = {str(folder.name): folder for folder in self.folders}
 
     def add_folder(self, folder: Folder):
         if folder.name in [f.name for f in self.folders]:
             raise ValueError(f"Folder {folder.name} already exists")
         self.folders.append(folder)
+        self._index[str(folder.name)] = folder
 
         return self
 
@@ -262,3 +276,6 @@ class Package(BaseModel):
             if folder_name.is_dir()
         ]
         return cls(name=path.name, root=path.parent, folders=folders)
+
+    def __getitem__(self, key: str) -> Any:
+        return self._index[key]
