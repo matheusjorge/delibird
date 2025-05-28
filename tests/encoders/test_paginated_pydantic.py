@@ -20,7 +20,6 @@ def test_paginated_pydantic_encoder_dump_one_page():
     path = directory / "test.json"
     PaginatedPydanticEncoder.disk_dump(content, path)
 
-    print(list(directory.glob("*.json")))
     assert (directory / "test_0.json").exists()
     assert not (directory / "test_1.json").exists()
 
@@ -90,6 +89,7 @@ def test_paginated_with_file():
         "test.json",
         SimpleModel,
         content_encoder_class=PaginatedPydanticEncoder,
+        dump_kwargs={},
     )
     assert loaded_file == file
     shutil.rmtree(directory)
@@ -106,10 +106,13 @@ def test_paginated_with_folder():
     directory = Path(".")
     directory.mkdir(parents=True, exist_ok=True)
     file = File(
-        filename="test.json", content=content, content_encoder=PaginatedPydanticEncoder
+        filename="test.json",
+        content=content,
+        content_encoder=PaginatedPydanticEncoder,
+        dump_kwargs={"page_size": 3},
     )
     folder = Folder(name="paginated")
-    folder.add_file(file, dump_kwargs={"page_size": 3})
+    folder.add_file(file)
 
     folder.dump(directory)
 
@@ -130,10 +133,13 @@ def test_paginated_with_package():
     directory = Path(".")
     directory.mkdir(parents=True, exist_ok=True)
     file = File(
-        filename="test.json", content=content, content_encoder=PaginatedPydanticEncoder
+        filename="test.json",
+        content=content,
+        content_encoder=PaginatedPydanticEncoder,
+        dump_kwargs={"page_size": 3},
     )
     folder = Folder(name="paginated")
-    folder.add_file(file, dump_kwargs={"page_size": 3})
+    folder.add_file(file)
 
     package = Package(name="test_paginated")
     package.add_folder(folder)

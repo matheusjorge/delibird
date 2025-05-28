@@ -48,6 +48,7 @@ def test_file_load(test_content, test_content_class):
         "test.json",
         content_encoder_class=PydanticEncoder,
         content_class=test_content_class,
+        dump_kwargs={},
     )
     assert loaded_file.content == test_content
 

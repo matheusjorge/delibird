@@ -1,6 +1,7 @@
 import importlib
 import inspect
 import json
+from copy import deepcopy
 from pathlib import Path
 from typing import Annotated, Any, Mapping, Sequence, Type
 
@@ -9,6 +10,7 @@ from pydantic import (
     BeforeValidator,
     ConfigDict,
     Field,
+    computed_field,
     field_serializer,
     model_validator,
 )
@@ -111,6 +113,13 @@ class File(BaseModel):
             description="The encoder used to dump and load the content",
         ),
     ]
+    dump_kwargs: Annotated[
+        Mapping[str, Any],
+        Field(
+            ...,
+            description="The kwargs used to dump the file. Will be passed to the content encoder",
+        ),
+    ] = {}
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -121,7 +130,9 @@ class File(BaseModel):
         return self
 
     def dump(self, path: Path, **kwargs) -> None:
-        self.content_encoder.disk_dump(self.content, path / self.filename, **kwargs)
+        _kwargs = deepcopy(self.dump_kwargs)
+        _kwargs.update(kwargs)
+        self.content_encoder.disk_dump(self.content, path / self.filename, **_kwargs)
 
     @classmethod
     def load(
@@ -129,6 +140,7 @@ class File(BaseModel):
         folder_path: Path,
         filename: str,
         content_class: Type[Any],
+        dump_kwargs: Mapping[str, Any] | None = None,
         content_encoder_class: Type[ContentEncoderProtocol] = PydanticEncoder,
         **kwargs,
     ) -> "File":
@@ -137,8 +149,23 @@ class File(BaseModel):
             content_class,
             **kwargs,
         )
+        if dump_kwargs is None:
+            dump_kwargs = {}
         return cls(
-            filename=filename, content=content, content_encoder=content_encoder_class
+            filename=filename,
+            content=content,
+            content_encoder=content_encoder_class,
+            dump_kwargs=dump_kwargs,
+        )
+
+    @computed_field
+    @property
+    def metadata(self) -> FileMetadata:
+        return FileMetadata(
+            filename=self.filename,
+            file_content_class=self.content_encoder.base_dump_class(self.content),
+            file_content_encoder_class=self.content_encoder,
+            file_dump_kwargs=self.dump_kwargs,
         )
 
 
@@ -148,18 +175,11 @@ class Folder(BaseModel):
     folders: Annotated[Sequence["Folder"], Field(default_factory=list)]
     folder_metadata: Annotated[FolderMetadata, Field(default_factory=FolderMetadata)]
 
-    def add_file(self, file: File, dump_kwargs: Mapping[str, Any] = {}):
+    def add_file(self, file: File):
         if file.filename in [f.filename for f in self.files]:
             raise ValueError(f"File {file.filename} already exists")
         self.files.append(file)
-        self.folder_metadata.append(
-            FileMetadata(
-                filename=file.filename,
-                file_content_class=file.content_encoder.base_dump_class(file.content),
-                file_content_encoder_class=file.content_encoder,
-                file_dump_kwargs=dump_kwargs,
-            )
-        )
+        self.folder_metadata.append(file.metadata)
         return self
 
     def remove_file(self, file: File):
@@ -180,8 +200,8 @@ class Folder(BaseModel):
     def dump(self, path: Path, **kwargs) -> None:
         full_path = path / self.name
         full_path.mkdir(parents=True, exist_ok=True)
-        for file, metadata in zip(self.files, self.folder_metadata.files_metadata):
-            file.dump(full_path, **metadata.file_dump_kwargs, **kwargs)
+        for file in self.files:
+            file.dump(full_path, **kwargs)
         for folder in self.folders:
             folder.dump(full_path, **kwargs)
         self.folder_metadata.dump(full_path)
@@ -196,6 +216,7 @@ class Folder(BaseModel):
                 filename=file_metadata.filename,
                 content_encoder_class=file_metadata.file_content_encoder_class,
                 content_class=file_metadata.file_content_class,
+                dump_kwargs=file_metadata.file_dump_kwargs,
             )
             files.append(file)
 
